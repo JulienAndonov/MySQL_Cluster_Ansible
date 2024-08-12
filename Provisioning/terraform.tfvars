@@ -1,0 +1,13 @@
+instance_count = 3
+compartment_ocid="ocid1.compartment.oc1..aaaaaaaayb54p7ujb5ney2brpvywvuom75et33obzuciqyfqnyhv2g6dtwnq"
+user_data="ocid1.user.oc1..aaaaaaaarswxcn2rsoecvtpsxul76clmwdhnired4fwe5t5tcndwkxgnt4eq"
+availability_domain="AD-1" 	
+private_key="~\\.ssh\\id_rsa_oci"
+ssh_authorized_keys="~\\.ssh\\id_rsa_oci.pub"
+ssh_public_keys="~\\.ssh\\id_rsa_oci.pub"
+region="us-phoenix-1"
+tenancy_ocid="ocid1.tenancy.oc1..aaaaaaaarx3oltzmcws24bsf2mp77h6vbqwieembc74s2gohnfjanqamdxjq"
+subnet_name = "Relational_DB-PrivSub1"
+instances = ["ansible", "mysql_cluster_a", "mysql_cluster_b", "mysql_cluster_c","mysql_router_a", "mysql_router_b", "mysql_router_c","mysql_cluster_d","mysql_cluster_e","mysql_cluster_f","mysql_router_d","mysql_router_e","mysql_router_f"]
+compute_instance_owner = "Julien"
+subnet_ocids = ["ocid1.subnet.oc1.phx.aaaaaaaapusu6alhnceh2kzz55nsgb6d77ki7qwfjnqojvaahrcxgywftdhq"]

@@ -1,0 +1,90 @@
+---
+- name: Create InnoDB Cluster
+  vars:
+    ansible_user: opc
+    ansible_become: yes
+    ansible_become_method: sudo
+    ansible_python_interpreter: /usr/bin/python
+  hosts: "{{ dbservers.split(',') }}"
+  vars_file:
+    - ~/ansible/roles/innodb_cluster/vars/main.yml
+
+  pre_tasks:
+    - name: Obtain the MySQL root password
+      command: "{{ root_password }}"
+      become: yes
+      become_user: opc
+      delegate_to: localhost
+      run_once: true
+      register: root_password_output
+
+    - name: Obtain the Cluster User password
+      command: "{{ cluster_user_password }}"
+      become: yes
+      become_user: opc
+      delegate_to: localhost
+      run_once: true
+      register: cluster_user_password_output
+
+    - name: Set the MySQL root user password as a fact
+      set_fact:
+        root_password: "{{ root_password_output.stdout }}"
+
+    - name: Set the Cluster user password as a fact
+      set_fact:
+        cluster_user_password: "{{ cluster_user_password_output.stdout }}"
+
+    - name: Show the MySQL root user password
+      debug:
+        msg: "{{ root_password }}"
+
+    - name: Show the Cluster user password
+      debug:
+        msg: "{{ cluster_user_password }}"
+  roles:
+    - innodb_cluster
+
+- name: Create MySQL Router
+  vars:
+    ansible_user: opc
+    ansible_become: yes
+    ansible_become_method: sudo
+    ansible_python_interpreter: /usr/bin/python
+  hosts: "{{ mysql_routers.split(',') }}"
+  vars_file:
+    - ~/ansible/roles/innodb_cluster/vars/main.yml
+  pre_tasks:
+    - name: Obtain the Cluster User password
+      command: "{{ cluster_user_password }}"
+      become: yes
+      become_user: opc
+      delegate_to: localhost
+      run_once: true
+      register: cluster_user_password_output
+
+    - name: Set the Cluster user password as a fact
+      set_fact:
+        cluster_user_password: "{{ cluster_user_password_output.stdout }}"
+
+    - name: Show the Cluster user password
+      debug:
+        msg: "{{ cluster_user_password }}"
+
+    - name: Obtain the Router friend password
+      command: "{{ routerfriend_password }}"
+      become: yes
+      become_user: opc
+      delegate_to: localhost
+      run_once: true
+      register: routerfriend_password_output
+
+    - name: Set the Router friend password as a fact
+      set_fact:
+        routerfriend_password: "{{ routerfriend_password_output.stdout }}"
+        
+    - name: Show the Router friend password
+      debug:
+        msg: "{{ routerfriend_password }}"
+
+  roles:
+    - mysql_router

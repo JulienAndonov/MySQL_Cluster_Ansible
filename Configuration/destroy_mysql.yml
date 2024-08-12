@@ -1,0 +1,39 @@
+. - name: Destroy MySQL
+  vars:
+    ansible_user: opc
+    ansible_become: yes
+    ansible_become_method: sudo
+    ansible_python_interpreter: /usr/bin/python
+  hosts: "{{ dbservers.split(',') }}"
+  tasks:
+    - block:
+      - name: Stop MySQL
+        service:
+          name: mysqld
+          state: stopped
+
+      - name: Remove MySQL Libraries
+        yum:
+          name:
+            - mysql-server
+            - mysql-shell
+            - mysql-devel
+            - mysql-common
+            - mysql-libs
+            - mysql
+          state: absent
+
+      - name: Remove MySQL Files
+        file:
+          path: /etc/my.cnf
+          state: absent
+
+      - name: Remove Login files
+        file:
+          path: /root/.my.cnf
+          state: absent
+
+      - name: Remove MySQL directory
+        file:
+          path: /var/lib/mysql
+          state: absent

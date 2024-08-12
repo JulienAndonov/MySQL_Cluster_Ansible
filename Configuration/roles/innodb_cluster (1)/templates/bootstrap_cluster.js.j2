@@ -1,0 +1,19 @@
+var cluster_user_password = "{{ cluster_user_password }}";
+var clusterName = "{{ cluster_name }}";
+var secondary_nodes = "{{ secondary_nodes }}";
+var root_password = "{{ root_password }}";
+var cluster_user = "{{ cluster_user }}";
+
+var mysql = require('mysql');
+
+try{
+   dba.configureInstance('root@localhost', {
+    password: `${root_password}`,
+    restart: true,
+    interactive: false,
+    clusterAdmin: '{{ cluster_user }}',
+    clusterAdminPassword: `${cluster_user_password}`
+  });
+} catch(e){
+    print('\n The innodb cluster admin user could not be created\n' + e.message + '\n');
+}

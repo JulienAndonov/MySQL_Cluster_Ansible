@@ -1,0 +1,24 @@
+yum install python36-oci-cli
+
+ansible-playbook setup_clusterset.yml \
+-e "cluster_user=ClusterUser" \
+-e "cluster_name=InnoDBCluster" \
+-e "vault_id=ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a" \
+-e "vault_region=us-phoenix-1" \
+-e "dbservers=10.14.2.147,10.14.15.89,10.14.11.63" \
+-e "mysql_routers=10.14.12.175,10.14.1.83,10.14.9.89"
+
+ansible-playbook destroy_mysql.yml \
+-e "dbservers=10.14.2.147,10.14.15.89,10.14.11.63" \
+-e "mysql_routers=10.14.12.175,10.14.1.83,10.14.9.89"
+
+ansible-playbook setup_maa.yml -e "PRIMARY=a,b,c"-e "SECONDARY=d,e,f"
+
+ssh -i id_rsa_oci -o ProxyCommand="ssh -i id_rsa_oci -W %h:%p -p 22 ocid1.bastionsession.oc1.phx.amaaaaaad2zjmiaatbfrgkmoglur7vxirydxmianc66dualyeiy2jfqwxxxq@host.bastion.us-phoenix-1.oci.oraclecloud.com -A" -p 22 opc@10.0.7.224 -A
+
+oci secrets secret-bundle get-secret-bundle-by-name --secret-name='mysql_root_password' --vault-id 'ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a' --region 'us-phoenix-1' --query 'data."secret-bundle-content".content' --raw-output | base64 -d
+oci secrets secret-bundle get-secret-bundle-by-name --secret-name='cluster_user_password' --vault-id 'ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a' --region 'us-phoenix-1' --query 'data."secret-bundle-content".content' --raw-output | base64 -d
+oci secrets secret-bundle get-secret-bundle-by-name --secret-name='routerfriend_password' --vault-id 'ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a' --region 'us-phoenix-1' --query 'data."secret-bundle-content".content' --raw-output | base64 -d
+root_password: "oci secrets secret-bundle get-secret-bundle-by-name --secret-name='mysql_root_password' --vault-id 'ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a' --region 'us-phoenix-1' --query 'data.\"secret-bundle-content\".content' --raw-output"
+
+cluster_user_password: "oci secrets secret-bundle get-secret-bundle-by-name --secret-name='cluster_user_password' --vault-id 'ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a' --region 'us-phoenix-1' --query 'data.\"secret-bundle-content\".content' --raw-output"

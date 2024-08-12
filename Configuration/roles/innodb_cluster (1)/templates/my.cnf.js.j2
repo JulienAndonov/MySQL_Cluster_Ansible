@@ -1,0 +1,12 @@
+[mysqld]
+server_id={{ mysql_server_id.stdout }}
+binlog_checksum=NONE
+gtid_mode=ON
+enforce_gtid_consistency=ON
+log_bin
+log_slave_updates=ON
+master_info_repository=TABLE
+relay_log_info_repository=TABLE
+skip-host-cache
+skip-name-resolve
+binlog_transaction_dependency_tracking=WRITESET
