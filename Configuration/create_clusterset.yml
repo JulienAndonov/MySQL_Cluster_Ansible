@@ -6,7 +6,7 @@
     ansible_become_method: sudo
     ansible_python_interpreter: /usr/bin/python
   hosts: "{{ dbservers.split(',') }}"
-  vars_file:
+  vars_files:
     - ~/ansible/roles/innodb_cluster/vars/main.yml
 
   pre_tasks:
@@ -51,8 +51,8 @@
     ansible_become_method: sudo
     ansible_python_interpreter: /usr/bin/python
   hosts: "{{ mysql_routers.split(',') }}"
-  vars_file:
-    - ~/ansible/roles/innodb_cluster/vars/main.yml
+  vars_files:
+    - ~/ansible/roles/mysql_router/vars/main.yml
   pre_tasks:
     - name: Obtain the Cluster User password
       command: "{{ cluster_user_password }}"
@@ -81,10 +81,9 @@
     - name: Set the Router friend password as a fact
       set_fact:
         routerfriend_password: "{{ routerfriend_password_output.stdout }}"
-        
+
     - name: Show the Router friend password
       debug:
         msg: "{{ routerfriend_password }}"
-
   roles:
     - mysql_router

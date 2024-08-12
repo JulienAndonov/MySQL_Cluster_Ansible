@@ -1,0 +1,9 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+spawn mysqlrouter --bootstrap {{ cluster_user }}@{{ primary_node }}:3306 --directory /tmp/myrouter --conf-use-sockets --account routerfriend --account-create always --force
+expect "Please enter MySQL password for ClusterUser: "
+send -- "{{ cluster_user_password }}\r"
+expect "Please enter MySQL password for routerfriend: "
+send -- "{{ routerfriend_password }}\r"
+expect eof

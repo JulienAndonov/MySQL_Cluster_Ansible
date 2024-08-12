@@ -1,0 +1,44 @@
+---
+- name: Install the necessary packages
+  yum:
+    name:
+      - mysql-router-community
+      - expect
+    state: present
+
+- name: Disable Selinux
+  ansible.builtin.command: setenforce 0
+
+- name: Stop firewall
+  service:
+    name: firewalld
+    state: stopped
+
+- name: Define the primary host (e.g. first host in the group)
+  set_fact:
+    primary_node: "{{ dbservers.split(',')[0] }}"
+
+- name: Define the primary router (e.g. first host in the group)
+  set_fact:
+    primary_router: "{{ mysql_routers.split(',')[0] }}"
+
+- name: Template bootstrapping js for mysqlsh
+  template:
+    dest: "/tmp/bootstrap_router.sh"
+    src: templates/bootstrap_router.js.j2
+    owner: "opc"
+    group: "opc"
+    mode: '0700'
+  when: inventory_hostname == "{{ primary_router }}"
+
+- name: Bootstrap the router
+  become: yes
+  become_user: opc
+  shell: /tmp/bootstrap_router.sh
+  when: inventory_hostname == "{{ primary_router }}"
+
+- name: Start the router
+  become: yes
+  become_user: opc
+  shell: /tmp/myrouter/start.sh &
+  when: inventory_hostname == "{{ primary_router }}"

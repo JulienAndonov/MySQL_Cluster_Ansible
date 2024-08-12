@@ -1,4 +1,4 @@
-. - name: Destroy MySQL
+- name: Destroy MySQL
   vars:
     ansible_user: opc
     ansible_become: yes
@@ -21,6 +21,7 @@
             - mysql-common
             - mysql-libs
             - mysql
+            - mysql-router-community
           state: absent
 
       - name: Remove MySQL Files
@@ -36,4 +37,37 @@
       - name: Remove MySQL directory
         file:
           path: /var/lib/mysql
+          state: absent
+
+      - name: Remove MySQL Router
+        file:
+          path: /tmp/mysqlrouter
+          state: absent
+
+
+
+- name: Destroy MySQL
+  vars:
+    ansible_user: opc
+    ansible_become: yes
+    ansible_become_method: sudo
+    ansible_python_interpreter: /usr/bin/python
+  hosts: "{{ mysql_routers.split(',') }}"
+  tasks:
+    - block:
+      - name: Remove the package
+        yum:
+          name:
+            - mysql-router-community
+            - expect
+          state: absent
+
+      - name: Remove Router directory
+        file:
+          path: /tmp/mysqlrouter
+          state: absent
+
+      - name: Remove the PID file
+        file:
+          path: /tmp/myrouter/mysqlrouter.pid
           state: absent
