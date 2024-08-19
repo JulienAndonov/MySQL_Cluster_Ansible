@@ -1,0 +1,24 @@
+var cluster_user_password = "{{ cluster_user_password }}";
+var clusterName = "{{ cluster_name }}";
+var secondary_nodes = "{{ secondary_nodes }}";
+var root_password = "{{ root_password }}";
+var cluster_user = "{{ cluster_user }}";
+var clusterSetName = "{{ clusterSetName }}";
+var replica_nodes = "{{ replica_nodes }}";
+var replica_nodes = replica_nodes.replaceAll("u","").replaceAll("'","\"").replaceAll("\"","").replaceAll("[","").replaceAll("]","").replaceAll(" ","").split(',');
+
+var mysql = require('mysql');
+
+try{
+shell.connect('{{ cluster_user }}@{{ primary_node }}', cluster_user_password);
+mycluster = dba.getCluster()
+myclusterset = mycluster.createClusterSet(`${clusterSetName}`);
+myreplicaset = myclusterset.createReplicaCluster(`${replica_nodes[0]}`, "clusterReplica", {recoveryProgress: 1, timeout: 10, interactive: false, recoveryMethod: "clone"})
+
+for(let i=1; i < replica_nodes.length; i++) {
+        myreplicaset.addInstance(`${cluster_user}@${replica_nodes[i]}`, { password: `${cluster_user_password}`, recoveryMethod: "clone"} );  
+}
+
+} catch(e){
+    print('\n The innodb cluster admin user could not be created\n' + e.message + '\n');
+}

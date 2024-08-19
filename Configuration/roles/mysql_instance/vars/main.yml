@@ -1,0 +1,3 @@
+---
+root_password: "oci secrets secret-bundle get-secret-bundle-by-name --secret-name='mysql_root_password' --vault-id '{{ vault_id }}' --region '{{ vault_region }}' --query 'data.\"secret-bundle-content\".content' --raw-output"
+cluster_user_password: "oci secrets secret-bundle get-secret-bundle-by-name --secret-name='cluster_user_password' --vault-id '{{ vault_id }}' --region '{{ vault_region }}' --query 'data.\"secret-bundle-content\".content' --raw-output"

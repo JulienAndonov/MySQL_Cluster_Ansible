@@ -1,64 +1,16 @@
 ---
-- name: Install the necessary packages
-  yum:
-    name:
-      - mysql-server
-      - mysql-shell
-      - mysql-devel
-      - mysql-common
-      - mysql-libs
-      - mysql
-    state: present
-
-- name: Disable Selinux
-  ansible.builtin.command: setenforce 0
-
-- name: Stop firewall
-  service:
-    name: firewalld
-    state: stopped
-
-- name: Start the MySQL Service
-  ansible.builtin.service:
-    name: mysqld
-    state: started
-
-- name: Check the existance of a mysql file
-  stat:
-    path: /root/.my.cnf
-  register: mysql_file
-
-- name: Obtain & Change temporal password
-  shell: |
-    temporal_password=`awk '/A temporary password is generated for/ {a=$0} END{ print a }' /var/log/mysqld.log | awk '{print $(NF)}'`
-    mysql -uroot -p${temporal_password} -e "SET GLOBAL super_read_only = 0; SET GLOBAL read_only = 0; " --connect-expired-password
-    mysql -uroot -p${temporal_password} -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ root_password }}';flush privileges; " --connect-expired-password
-    echo "[client]
-    user=root
-    password=\"{{ root_password }}\"" > /root/.my.cnf
-  when: not mysql_file.stat.exists
-
-- name: Generate random server_id
-  shell: |
-    echo $((0x$(echo `hostname` | md5sum | cut -f 1 -d " " | cut -c 1-3))) | cut -c 1-3
-  register: mysql_server_id
-
-- name: Stop MySQL If running
-  service:
-    name: mysqld
-    state: stopped
-
 - name: Define the primary host (e.g. first host in the group)
   set_fact:
-    primary_node: "{{ dbservers.split(',')[0] }}"
+    primary_node: "{{ primary_nodes.split(',')[0] }}"
 
 - name: Define the secondary nodes
   set_fact:
-    secondary_nodes: "{{ dbservers.split(',')[1:] }}"
+    secondary_nodes: "{{ primary_nodes.split(',')[1:] }}"
 
 - name: Get secondary hosts
   debug:
     var: secondary_nodes
+
 - name: Start MySQL
   service:
     name: mysqld
@@ -72,7 +24,7 @@
     group: "mysql"
     mode: '0644'
 
-- name: Template InnoDB Cluster
+- name: Template Adding Cluster
   template:
     dest: "/tmp/add_instances.js"
     src: templates/add_instances.js.j2
@@ -80,8 +32,17 @@
     group: "mysql"
     mode: '0644'
 
+- name: Template bootstrapping js for mysqlsh
+  template:
+    dest: "/tmp/bootstrap_clusterset.js"
+    src: templates/bootstrap_clusterset.js.j2
+    owner: "mysql"
+    group: "mysql"
+    mode: '0644'
+
 - name: Bootstrap the cluster (new deployment)
   command: mysqlsh -f /tmp/bootstrap_cluster.js
+  when: inventory_hostname == "{{ primary_node }}"
 
 - name: Wait to start
   wait_for:
@@ -89,4 +50,12 @@
 
 - name: Add the other instances
   command: mysqlsh -f /tmp/add_instances.js
+  when: inventory_hostname == "{{ primary_node }}"
+
+- name: Wait to start
+  wait_for:
+    timeout: 10
+
+- name: Bootstrap the clusterset (Replica Cluster)
+  command: mysqlsh -f /tmp/bootstrap_clusterset.js
   when: inventory_hostname == "{{ primary_node }}"

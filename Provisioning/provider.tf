@@ -7,14 +7,6 @@ terraform {
   }
 }
 
-#provider "oci" {
-#  tenancy_ocid         = "ocid1.tenancy.oc1..aaaaaaaarx3oltzmcws24bsf2mp77h6vbqwieembc74s2gohnfjanqamdxjq"
-#  user_ocid            = "ocid1.user.oc1..aaaaaaaarswxcn2rsoecvtpsxul76clmwdhnired4fwe5t5tcndwkxgnt4eq"
-#  fingerprint          = "64:15:d8:c1:6f:32:a7:1c:d2:40:34:55:6d:63:0d:4e"
-#  private_key_path     = "/Users/julien.andonov/.oci/id_rsa"
-#  region               = "us-phoenix-1"
-#}
-
 provider "oci" {
   tenancy_ocid         = "ocid1.tenancy.oc1..aaaaaaaarx3oltzmcws24bsf2mp77h6vbqwieembc74s2gohnfjanqamdxjq"
   user_ocid            = "ocid1.user.oc1..aaaaaaaarswxcn2rsoecvtpsxul76clmwdhnired4fwe5t5tcndwkxgnt4eq"

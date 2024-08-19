@@ -1,24 +1,60 @@
+###Pre-steps on the ansible machine
+
+#Install OCI cli
 yum install python36-oci-cli
 
-ansible-playbook setup_clusterset.yml \
+#Configure the OCI-cli
+Create ~/.oci/config file as instructed by OCI:
+e.g.
+[DEFAULT]
+user=ocid1.user.oc1..aaaaaaaarswxcn2rsoecvtpsxul76clmwdhnired4fwe5t5tcndwkxgnt4eq
+fingerprint=75:3d:5e:11:a4:8e:7d:09:0c:79:b8:6e:68:23:13:a8
+tenancy=ocid1.tenancy.oc1..aaaaaaaarx3oltzmcws24bsf2mp77h6vbqwieembc74s2gohnfjanqamdxjq
+region=us-phoenix-1
+key_file=<path to your private keyfile> # TODO
+
+
+#configure ansible
+/etc/ansible/hosts
+
+[dbservers]
+10.14.2.147
+10.14.15.89
+10.14.11.63
+10.14.9.236
+10.14.5.106
+10.14.3.141
+
+[mysql_routers]
+10.14.12.175
+10.14.1.83
+10.14.9.89
+10.14.1.234
+10.14.6.175
+10.14.13.201
+
+#Create the cluster set
+Will create 3 InnoDB Cluster and 3 Routers.
+The 1st InnoDB in the list, will be R/W, the rest will be R/O
+The 1st Router will be the one started, the rest won't run
+
+A vault with the following secrets is needed:
+1. root_password - MySQL root password: dSMmT2JqM2J1ckg0Xnk=
+2. cluster_user_password - Cluster password for the InnoDB: MVkqWjg8QihPZWQ5ZmU=
+3. routerfriend_password - The router friend password for the Router
+
+ansible-playbook create_clusterset.yml \
 -e "cluster_user=ClusterUser" \
 -e "cluster_name=InnoDBCluster" \
+-e "clusterSetName=InnoDBClusterSet" \
 -e "vault_id=ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a" \
 -e "vault_region=us-phoenix-1" \
--e "dbservers=10.14.2.147,10.14.15.89,10.14.11.63" \
--e "mysql_routers=10.14.12.175,10.14.1.83,10.14.9.89"
+-e "primary_nodes=10.14.2.147,10.14.15.89,10.14.11.63" \
+-e "replica_nodes=10.14.9.236,10.14.5.106,10.14.3.141" \
+-e "routers=10.14.12.175,10.14.1.83"
+
 
 ansible-playbook destroy_mysql.yml \
--e "dbservers=10.14.2.147,10.14.15.89,10.14.11.63" \
+-e "dbservers=10.14.2.147,10.14.15.89,10.14.11.63,10.14.9.236,10.14.5.106,10.14.3.141" \
 -e "mysql_routers=10.14.12.175,10.14.1.83,10.14.9.89"
 
-ansible-playbook setup_maa.yml -e "PRIMARY=a,b,c"-e "SECONDARY=d,e,f"
-
-ssh -i id_rsa_oci -o ProxyCommand="ssh -i id_rsa_oci -W %h:%p -p 22 ocid1.bastionsession.oc1.phx.amaaaaaad2zjmiaatbfrgkmoglur7vxirydxmianc66dualyeiy2jfqwxxxq@host.bastion.us-phoenix-1.oci.oraclecloud.com -A" -p 22 opc@10.0.7.224 -A
-
-oci secrets secret-bundle get-secret-bundle-by-name --secret-name='mysql_root_password' --vault-id 'ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a' --region 'us-phoenix-1' --query 'data."secret-bundle-content".content' --raw-output | base64 -d
-oci secrets secret-bundle get-secret-bundle-by-name --secret-name='cluster_user_password' --vault-id 'ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a' --region 'us-phoenix-1' --query 'data."secret-bundle-content".content' --raw-output | base64 -d
-oci secrets secret-bundle get-secret-bundle-by-name --secret-name='routerfriend_password' --vault-id 'ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a' --region 'us-phoenix-1' --query 'data."secret-bundle-content".content' --raw-output | base64 -d
-root_password: "oci secrets secret-bundle get-secret-bundle-by-name --secret-name='mysql_root_password' --vault-id 'ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a' --region 'us-phoenix-1' --query 'data.\"secret-bundle-content\".content' --raw-output"
-
-cluster_user_password: "oci secrets secret-bundle get-secret-bundle-by-name --secret-name='cluster_user_password' --vault-id 'ocid1.vault.oc1.phx.efsxuaeqaah44.abyhqljsbqx5sji73hqjgmfsmdozhvudmncjd6kueitppw4zn3slqmzmee6a' --region 'us-phoenix-1' --query 'data.\"secret-bundle-content\".content' --raw-output"

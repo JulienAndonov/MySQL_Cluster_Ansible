@@ -1,11 +1,54 @@
 ---
+- name: Create the replica MySQL instances
+  vars:
+    ansible_user: opc
+    ansible_become: yes
+    ansible_become_method: sudo
+    ansible_python_interpreter: /usr/bin/python
+  hosts: "{{ replica_nodes.split(',') }}"
+  vars_files:
+    - ~/ansible/roles/mysql_instance/vars/main.yml
+
+  pre_tasks:
+    - name: Obtain the MySQL root password
+      command: "{{ root_password }}"
+      become: yes
+      become_user: opc
+      delegate_to: localhost
+      run_once: true
+      register: root_password_output
+
+    - name: Set the MySQL root user password as a fact
+      set_fact:
+        root_password: "{{ root_password_output.stdout }}"
+
+    - name: Show the MySQL root user password
+      debug:
+        msg: "{{ root_password }}"
+
+    - name: Obtain the Cluster User password
+      command: "{{ cluster_user_password }}"
+      become: yes
+      become_user: opc
+      delegate_to: localhost
+      run_once: true
+      register: cluster_user_password_output
+
+    - name: Set the Cluster user password as a fact
+      set_fact:
+        cluster_user_password: "{{ cluster_user_password_output.stdout }}"
+
+  roles:
+    - mysql_instance
+
+
 - name: Create InnoDB Cluster
   vars:
     ansible_user: opc
     ansible_become: yes
     ansible_become_method: sudo
     ansible_python_interpreter: /usr/bin/python
-  hosts: "{{ dbservers.split(',') }}"
+  hosts: "{{ primary_nodes.split(',') }}"
   vars_files:
     - ~/ansible/roles/innodb_cluster/vars/main.yml
 
@@ -42,6 +85,7 @@
       debug:
         msg: "{{ cluster_user_password }}"
   roles:
+    - mysql_instance
     - innodb_cluster
 
 - name: Create MySQL Router
@@ -50,7 +94,7 @@
     ansible_become: yes
     ansible_become_method: sudo
     ansible_python_interpreter: /usr/bin/python
-  hosts: "{{ mysql_routers.split(',') }}"
+  hosts: "{{ routers.split(',') }}"
   vars_files:
     - ~/ansible/roles/mysql_router/vars/main.yml
   pre_tasks:
